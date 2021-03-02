@@ -34,10 +34,9 @@ clearvars;
 
 % Get User Input (See comments below for more explanation of parameter settings.)
 
-% the user_settings.mat file should be in the iCorre directory, which is
-% added into the Path variables
-%path_settings = 'E:\labcode\iCorre-Registration-master\iCorre-Registration-master\user_settings.mat'; %Default user settings file; edit to specify eg a path within your data directory hierarchy
-[root_dir, params] = getUserSettings('user_settings.mat');
+% the user_settings.mat file should be in the iCorre d
+path_settings = 'E:\labcode\iCorre-Registration-master\iCorre-Registration-master\user_settings.mat'; %Default user settings file; edit to specify eg a path within your data directory hierarchy
+[root_dir, params] = getUserSettings(path_settings);
 
 % If Batch Processing not Specified
 if isempty(root_dir)
