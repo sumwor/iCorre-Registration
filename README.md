@@ -1,7 +1,6 @@
 # main function:
 **start_icorre.m**
 
-	path_settings = ""; set to the path of the user_settings.mat
 
 # parameters:
 
