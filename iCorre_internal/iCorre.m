@@ -49,6 +49,7 @@ while (max(err) > max_err && nReps < max_reps) %continue if i<max_rep
     
     QCcount = 1;
     saveLength = numel(path_names);
+    tCPU = zeros(numel(path_names), 10); tGPU = zeros(numel(path_names),10);
     for i=1:numel(path_names)
         
         % variables for quality control, saved every 100 trials to solve
@@ -72,8 +73,22 @@ while (max(err) > max_err && nReps < max_reps) %continue if i<max_rep
         if isfield(S,'options')
             options = S.options; %Load struct so field can be appended for new registration type
         end
+        
+        %% check the speed of cpu/gpu computing
+        
+        for jj = 1:10
+         tic;
+         [stack,shifts,~ ,options.(options_label),~] = ...
+            normcorre_batch_gpu(S.stack,options_in,template_in); %use parallel processing toolbox (parfor loop)
+        tGPU(i,jj) = toc;
+        
+            
+            tic;
         [stack,shifts,~ ,options.(options_label),~] = ...
             normcorre_batch(S.stack,options_in,template_in); %use parallel processing toolbox (parfor loop)
+        tCPU(i,jj) = toc;
+        end
+        
         local_avg(:,:,i) = mean(stack,3); %take mean of each stack for later grand avg frame to be used as new template.
 
         %% quality control
