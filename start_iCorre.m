@@ -36,7 +36,7 @@ clearvars;
 
 % the user_settings.mat file should be in the iCorre directory, which is
 % added into the Path variables
-%path_settings = 'E:\labcode\iCorre-Registration-master\iCorre-Registration-master\user_settings.mat'; %Default user settings file; edit to specify eg a path within your data directory hierarchy
+path_settings = 'user_settings.mat'; %Default user settings file; edit to specify eg a path within your data directory hierarchy
 [root_dir, params] = getUserSettings('user_settings.mat');
 
 % If Batch Processing not Specified

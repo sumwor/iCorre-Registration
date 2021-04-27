@@ -112,11 +112,11 @@ while (max(err) > max_err && nReps < max_reps) %continue if i<max_rep
         if mod(i,saveLength) == 0
             
             if strcmp(options_label,'RMC')
-                QCfile = fullfile(path_QC,['QC_RM_',num2str(QCcount),'.mat']);
+                QCfile = fullfile(path_QC,['QC_RM_',num2str(QCcount)','_',num2str(nReps),'.mat']);
                 save(QCfile,'nnYc','mmYc','cYc','mYc','vYc','cMRc','mMRc','vMRc','Tc','shifts_rc','options_label');
 
             elseif strcmp(options_label,'NRMC')
-                QCfile = fullfile(path_QC,['QC_NRM_',num2str(QCcount),'.mat']);
+                QCfile = fullfile(path_QC,['QC_NRM_',num2str(QCcount),'_',num2str(nReps),'.mat']);
                 save(QCfile,'nnYc','mmYc','cYc','mYc','vYc','cMNRc','mMNRc','vMNRc','Tc','shifts_nrc','shifts_xc','shifts_yc','options_label');
             end
             QCcount = QCcount + 1;

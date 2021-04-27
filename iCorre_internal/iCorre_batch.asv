@@ -36,13 +36,10 @@ if params.batch_pro
     temp = ~(strcmp(data_dirs,'.') | strcmp(data_dirs,'..'));
     data_dirs = data_dirs(temp); %remove '.' and '..' from directory list
     disp('Directories for movement correction:');
-    disp(data_dirs');
 else
-    data_dirs{1} = '';
-    disp('Directories for movement correction:');
-    disp(root_dir);
+    data_dirs = root_dir;
 end
-
+disp(data_dirs');
 
 %% Setup parallel pool for faster processing
 if isempty(gcp('nocreate'))
