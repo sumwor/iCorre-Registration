@@ -6,6 +6,8 @@
 
 **Batch Directory (optional)** : the root directory for imaging data
 
+**Batch Processing**: if False, only process one single session given by Batch Directory
+
 **Save Settings As**: path for saving the user_settings.mat
 	
 **Scan Image Version**: should be 5
