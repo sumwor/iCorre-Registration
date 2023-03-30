@@ -20,23 +20,22 @@
 
 function ref_img = getRefImg(mat_path,stackInfo,nFrames)
 
-start_frame = round(0.5*sum(stackInfo.nFrames)-0.5*nFrames); %Get frames from ~halfway through session.
-stackIdx(1) = find(cumsum(stackInfo.nFrames)>=start_frame,1,'first'); %idx of stack that contains first frame in segment for initial averaging
-stackIdx(2) = find(cumsum(stackInfo.nFrames)>=start_frame+nFrames-1,1,'first'); %idx of stack that contains last frame
+warning('off','all')
+
+start_frame = round(0.5*sum(stackInfo.nFrames)); %Get frames from ~halfway through session.
+stackIdx(1) = start_frame; %idx of stack that contains first frame in segment for initial averaging
+stackIdx(2) = start_frame+nFrames-1; %idx of stack that contains last frame
 tempStack = zeros(stackInfo.imageHeight,stackInfo.imageWidth,nFrames); %to store all frames for averaging
 
-f1_global = 1 + [0; cumsum(stackInfo.nFrames(1:end-1))]; %Global idx for first frame of each stack
-jj = 1; %Frame counter for full stack used for averaging (var tempStack). 
+%f1_global = 1 + [0; cumsum(stackInfo.nFrames(1:end-1))]; %Global idx for first frame of each stack
+
 for j = stackIdx(1):stackIdx(2)
-    S = load(mat_path{j},'stack');
-    frameIdx = [1 stackInfo.nFrames(j)];  %Local idx to frames for avg projection
-    if j == stackIdx(1)
-        frameIdx(1) = start_frame - f1_global(j) + 1;
-    elseif j == stackIdx(2)
-        frameIdx(2) = start_frame - f1_global(j) + nFrames;
-    end
-    tempStack(:,:,jj:jj+(frameIdx(2)-frameIdx(1))) = S.stack(:,:,frameIdx(1):frameIdx(2));
-    jj = jj+(frameIdx(2)-frameIdx(1))+1;
+    tiff0 = fullfile(mat_path(j));
+    t = Tiff(tiff0{1}, 'r');
+    S = read(t);
+ %Local idx to frames for avg projection
+    tempStack(:,:,j) = S;
+    
 end
 
 ref_img = mean(tempStack,3); % initial template image

@@ -55,7 +55,7 @@ end
 
 %% Get directories and filenames
 for i=1:numel(data_dirs)
-    try
+    %try
         
         % Define & Create Subdirectories
         dirs.main = fullfile(root_dir,data_dirs{i});
@@ -83,11 +83,15 @@ for i=1:numel(data_dirs)
         % Define All Filepaths Based on Data Filename
         temp = dir(fullfile(dirs.raw,'*.tif'));
         file_names = cell(numel(temp),1);
+        frameStep = 1000; % stitch 1000 frames, save it in a single mat file
+        matcount = 1;
         for j=1:numel(temp)
             file_names{j} = temp(j).name;
-            paths.raw{j} = fullfile(dirs.raw,file_names{j});     
-            paths.mat{j} = fullfile(dirs.mat,[file_names{j}(1:end-4) '.mat']); %for .mat file
-
+            paths.raw{j} = fullfile(dirs.raw,file_names{j});
+            if mod(j, frameStep) == 1
+                paths.mat{matcount} = fullfile(dirs.mat,[file_names{j}(1:end-10), num2str(matcount), '.mat']); %for .mat file
+                matcount = matcount + 1;
+            end
         end
         
         % Additional Paths for Metadata
@@ -104,15 +108,28 @@ for i=1:numel(data_dirs)
         %% Load raw TIFs and convert to MAT for further processing, this is useful for aligning the imaging with behavior
 
              % check whether stack_info already exists
-            if ~exist(paths.stackInfo)
-                disp('Converting *.TIF files to *.MAT for movement correction...');
-                stackInfo = get_imgInfo(paths.raw, params); %Extract header info from image stack (written by ScanImage)
-                stackInfo.tags = tiff2mat(paths.raw, paths.mat, params.ref_channel); %Batch convert all TIF stacks to MAT and get info.
-                save(paths.stackInfo,'-STRUCT','stackInfo','-v7.3');
-            else
-                stackInfo = load(paths.stackInfo);
-            end
+             if ~exist(paths.stackInfo)
+                 disp('Converting *.TIF files to *.MAT for movement correction...');
+                 %stackInfo = get_imgInfo(paths.raw, params); %Extract header info from image stack (written by ScanImage)
+                 stackInfo.tags = tiff2mat(paths.raw, paths.mat, params.ref_channel); %Batch convert all TIF stacks to MAT and get info.
+                 save(paths.stackInfo,'-STRUCT','stackInfo','-v7.3');
+             else
+                 stackInfo = load(paths.stackInfo);
+             end
+        % no need to convert to mat file for suit2p data
+        % but do need the image height and width info
+        % read the first tiff file
+        tiff0 = fullfile(dirs.raw, file_names(1));
+        t = Tiff(tiff0{1}, 'r');
+        warning('off','all')
+        tiffdata = read(t);
+        warning
+        stiff = size(tiffdata);
+        stackInfo.imageWidth = stiff(1);
+        stackInfo.imageHeight = stiff(2);
+        stackInfo.nFrames = length(file_names);
 
+        close(t);
         
         %% Correct RIGID, then NON-RIGID movement artifacts iteratively
         % Set parameters
@@ -138,7 +155,8 @@ for i=1:numel(data_dirs)
         save(paths.regData,'params','-v7.3'); %so that later saves in the loop can use -append
         
         % Iterative movement correction
-        template = getRefImg(paths.mat,stackInfo,params.nFrames_seed); %Generate initial reference image to use as template
+        % modify this function
+        template = getRefImg(paths.raw,stackInfo,params.nFrames_seed); %Generate initial reference image to use as template
         
         options_label = fieldnames(options);
         
@@ -190,7 +208,7 @@ for i=1:numel(data_dirs)
             
         else
             %Save registered stacks as .TIF
-            for k = 1:numel(file_names)
+            for k = 1:numel(paths.mat)
                 S = load(paths.mat{k},'stack'); %load into struct to avoid eval(stack_names{k})
                 saveTiff(S.stack,stackInfo.tags,fullfile(dirs.save,[options_label{m} '_' file_names{k}])); %saveTiff(stack,img_info,save_path))
             end
@@ -210,24 +228,24 @@ for i=1:numel(data_dirs)
         clearvars '-except' dirs root_dir data_dirs file_names dirs paths params stackInfo options_label run_times status msg i m;
         
         
-    catch err
-        disp(err);
-        disp([{err.stack.file}' {err.stack.line}']);
-    end %end try
-    
-    if ~exist('err','var')
-        status(i) = true;
-        err_msg{i} = [];
-    else
-        status(i) = false;
-        err_msg{i} = err;
-        if exist(paths.regData)
-            save(paths.regData,'err_msg','-append'); %save error msg
-        else
-            save(paths.regData,'err_msg'); 
-        end
-    end
-    
+%     catch err
+%         disp(err);
+%         disp([{err.stack.file}' {err.stack.line}']);
+%     end %end try
+%     
+%     if ~exist('err','var')
+%         status(i) = true;
+%         err_msg{i} = [];
+%     else
+%         status(i) = false;
+%         err_msg{i} = err;
+%         if exist(paths.regData)
+%             save(paths.regData,'err_msg','-append'); %save error msg
+%         else
+%             save(paths.regData,'err_msg'); 
+%         end
+%     end
+%     
     clearvars '-except' dirs root_dir data_dirs params i status err_msg;
     
     

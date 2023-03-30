@@ -76,25 +76,25 @@ while (max(err) > max_err && nReps < max_reps) %continue if i<max_rep
 
         %% check the speed of cpu/gpu computing
 
-        %if gpuDeviceCount == 1
-        %    [stack,shifts,~ ,options.(options_label),~] = ...
-        %        normcorre_batch_gpu(S.savestack,options_in,template_in); %use parallel processing toolbox (parfor loop)
-
-        %else
+        if gpuDeviceCount == 1
             [stack,shifts,~ ,options.(options_label),~] = ...
-                normcorre_batch(S.stack,options_in,template_in); %use parallel processing toolbox (parfor loop)
+                normcorre_batch_gpu(S.savestack,options_in,template_in); %use parallel processing toolbox (parfor loop)
 
-        %end
+        else
+            [stack,shifts,~ ,options.(options_label),~] = ...
+                normcorre_batch(S.savestack,options_in,template_in); %use parallel processing toolbox (parfor loop)
+
+        end
         local_avg(:,:,i) = mean(stack,3); %take mean of each stack for later grand avg frame to be used as new template.
 
         %% quality control
         % correlation coefficients - downsample ten times
         % compute metrics
 
-        nnY = quantile(S.stack(:),0.005); nnYc(i) = nnY;
-        mmY = quantile(S.stack(:),0.995); mmYc(i) = mmY;
+        nnY = quantile(S.savestack(:),0.005); nnYc(i) = nnY;
+        mmY = quantile(S.savestack(:),0.995); mmYc(i) = mmY;
 
-        [cY,mY,vY] = motion_metrics(S.stack,10);
+        [cY,mY,vY] = motion_metrics(S.savestack,10);
         cYc{i} = cY; mYc(:,:,i) = mY; vYc(i) = vY;   % downsample
         if strcmp(options_label,'RMC')
             [cMR,mMR,vMR] = motion_metrics(stack,10);

@@ -35,21 +35,37 @@ tags.Photometric = Tiff.Photometric.MinIsBlack;
 tags.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
 tags.Software = 'MATLAB';
 
+matcount = 0;
+
 for i=1:numel(tif_paths)
     
     [pathname,filename,ext] = fileparts(tif_paths{i});
     source = [filename ext]; %Store filename of source file
     
-    disp(['Converting ' source '...']);
-    stack = loadtiffseq(pathname,source); % load raw stack (.tif)
+    if mod(i, 1000) == 1
+        % save mat files for every 1000 frame
+        disp(['Converting ' source '...']);
+        stack = zeros(img_info.Width, img_info.Height, 1000);
+        matcount = matcount + 1;
+        framecount = 1;
+    end    
+   
+    stacktemp = loadtiffseq(pathname,source); % load raw stack (.tif)
     if chan_number %Check for correction based on structural channel
-        stack = stack(:,:,chan_number:2:end); %Just convert reference channel
+        stacktemp = stacktemp(:,:,chan_number:2:end); %Just convert reference channel
     end
-    save(mat_paths{i},'stack','tags','source','-v7.3');
+    stack(:,:,framecount) = stacktemp;
+    framecount = framecount + 1;
+    
+
+    if mod(i, 1000) == 0 || i==numel(tif_paths)
+        save(mat_paths{matcount},'stack','tags','source','-v7.3');
+    end
 end
 
 %Console display
 [pathname,~,~] = fileparts(mat_paths{1});
+
 disp(['Stacks saved as .MAT in ' pathname]);
 disp(['Time needed to convert files: ' num2str(toc) ' seconds.']);
 warning(w); %revert warning state

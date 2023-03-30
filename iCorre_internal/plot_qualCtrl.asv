@@ -39,13 +39,13 @@ for ii = 1:numel(matFile)  % different iterations
         subplot(2,2,3); plot(1:T,cY,1:T,cM2); legend('raw data','non-rigid'); title('correlation coefficients','fontsize',14,'fontweight','bold') 
         subplot(2,2,4); scatter(cY,cM2); hold on; plot([0.9*min(cY),1.05*max(cM2)],[0.9*min(cY),1.05*max(cM2)],'--r'); axis square;
         xlabel('raw data','fontsize',14,'fontweight','bold'); ylabel('non-rigid corrected','fontsize',14,'fontweight','bold');
-        print(gcf, '-r0', fullfile(path_QC , ['NRMC_metrics','-iter',num2str(ii)]), '-dpng'); %png format
+        print(gcf, '-r0', fullfile(path_QC , 'NRMC_metrics','-iter',num2str(ii)), '-dpng'); %png format
 
     end
 
     %% plot shifts        
     if strcmp(data.options_label, 'RMC')  % rigid motion correction
-        if isgpuarray(data.shifts_rc{1})
+        if isgpuArray(data.shifts_rc{1})
             data.shifts_rc = cellfun(@gather, data.shifts_rc,  'UniformOutput', false);
         end
     shifts_r = cell2mat(data.shifts_rc');
@@ -70,7 +70,7 @@ for ii = 1:numel(matFile)  % different iterations
         ax3 = subplot(313); plot(shifts_y);  title('displacements along y','fontsize',14,'fontweight','bold')
             xlabel('timestep','fontsize',14,'fontweight','bold')
         linkaxes([ax1,ax2,ax3],'x')
-        print(gcf, '-r0', fullfile(path_QC , ['NRMC_shifts','-iter',num2str(ii)]), '-dpng'); %png format
+        print(gcf, '-r0', fullfile(path_QC , 'NRMC_shifts','-iter',num2str(ii)), '-dpng'); %png format
     end
 end
 

@@ -38,11 +38,11 @@ tags.Software = 'MATLAB';
 disp(['Saving stack as ' save_path '...']);
 t = Tiff(save_path,'w8'); %open/create tif for writing
 t.setTag(tags); %tag and write first frame
-t.write(img_stack(:,:,1));
+t.write(uint16(img_stack(:,:,1)));
 for j = 2:size(img_stack,3) %create write dir, tag, and write subsequent frames
     t.writeDirectory();
     t.setTag(tags);
-    t.write(img_stack(:,:,j));
+    t.write(uint16(img_stack(:,:,j)));
 end
 t.close();
 
