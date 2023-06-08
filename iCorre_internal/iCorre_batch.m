@@ -18,6 +18,7 @@
 
 function [ status, err_msg ] = iCorre_batch(root_dir,params)
 
+
 %% Set Parameters (if not included as input args)
 if nargin<2
     params.max_reps = [1,1,1]; %maximum number of repeats; [seed, rigid, non-rigid]
@@ -55,8 +56,8 @@ end
 
 %% Get directories and filenames
 for i=1:numel(data_dirs)
-    %try
-        
+        status(i) = true;
+        err_msg{i} = [];
         % Define & Create Subdirectories
         dirs.main = fullfile(root_dir,data_dirs{i});
         dirs.raw = fullfile(root_dir,data_dirs{i},'raw');
@@ -94,7 +95,7 @@ for i=1:numel(data_dirs)
             end
         end
         
-        % Additional Paths for Metadata
+        % Additional Paths for Metadat
         paths.regData = fullfile(root_dir,data_dirs{i},'reg_info.mat'); %Matfile containing registration data
         paths.stackInfo = fullfile(root_dir,data_dirs{i},'stack_info.mat'); %Matfile containing image header info and tag struct for writing to TIF
         
@@ -108,7 +109,7 @@ for i=1:numel(data_dirs)
         %% Load raw TIFs and convert to MAT for further processing, this is useful for aligning the imaging with behavior
 
              % check whether stack_info already exists
-             if ~exist(paths.stackInfo)
+             if ~exist(paths.stackInfo) 
                  disp('Converting *.TIF files to *.MAT for movement correction...');
                  %stackInfo = get_imgInfo(paths.raw, params); %Extract header info from image stack (written by ScanImage)
                  stackInfo.tags = tiff2mat(paths.raw, paths.mat, params.ref_channel); %Batch convert all TIF stacks to MAT and get info.
@@ -154,13 +155,18 @@ for i=1:numel(data_dirs)
         % Initialize .mat file
         save(paths.regData,'params','-v7.3'); %so that later saves in the loop can use -append
         
+
+        %% if dirs.QC is empty, run motion correction
+        QCcontent = dir(dirs.QC);
+         % if there are no quality assessment already, run motion correction
         % Iterative movement correction
         % modify this function
         template = getRefImg(paths.raw,stackInfo,params.nFrames_seed); %Generate initial reference image to use as template
         
         options_label = fieldnames(options);
-        
+       
         for m = find(params.max_reps) %seed, rigid, non-rigid
+             if numel(QCcontent) == 2 
             tic;
             disp(' ');
             disp([upper(options_label{m}) ' registration in progress...']);
@@ -181,6 +187,7 @@ for i=1:numel(data_dirs)
             
             %% plot quality control figures
             plot_qualCtrl(dirs.QC, options_label{m});
+             end
         end
         
         % display movement correction result analysis
@@ -209,12 +216,23 @@ for i=1:numel(data_dirs)
         else
             %Save registered stacks as .TIF
             for k = 1:numel(paths.mat)
-                S = load(paths.mat{k},'stack'); %load into struct to avoid eval(stack_names{k})
-                saveTiff(S.stack,stackInfo.tags,fullfile(dirs.save,[options_label{m} '_' file_names{k}])); %saveTiff(stack,img_info,save_path))
+                if exist(paths.mat{k})
+                    S = load(paths.mat{k},'stack'); %load into struct to avoid eval(stack_names{k})
+                    saveTiff(S.stack,stackInfo.tags,fullfile(dirs.save,[options_label{m} '_' file_names{k}])); %saveTiff(stack,img_info,save_path))
+                end
+
             end
             if params.do_stitch %Generate global and summary stacks for quality control
                 disp('Getting global downsampled stack (binned avg.) and max projection of registered frames...');
-                binnedAvg_batch(paths.mat,dirs.main,stackInfo,params.bin_width); %Save binned avg and projection to main data dir
+                %if exist(paths.mat{1})
+                %    binnedAvg_batch(paths.mat,dirs.main,stackInfo,params.bin_width); %Save binned avg and projection to main data dir
+                %else
+                    regfiles = dir(fullfile(dirs.save,'*.tif'));
+                    for rr = 1:length(regfiles)
+                        paths.reg{rr} = fullfile(regfiles(rr).folder, regfiles(rr).name);
+                    end
+                    binnedAvg_batch(paths.reg,dirs.main,stackInfo,params.bin_width);
+                %end
             end
             if params.delete_mat
                 rmdir(dirs.mat,'s'); %DELETE .MAT dir...
@@ -226,28 +244,23 @@ for i=1:numel(data_dirs)
         save(paths.regData,'run_times','-append'); %save parameters
         
         clearvars '-except' dirs root_dir data_dirs file_names dirs paths params stackInfo options_label run_times status msg i m;
-        
-        
-%     catch err
-%         disp(err);
-%         disp([{err.stack.file}' {err.stack.line}']);
-%     end %end try
-%     
-%     if ~exist('err','var')
-%         status(i) = true;
-%         err_msg{i} = [];
-%     else
-%         status(i) = false;
-%         err_msg{i} = err;
-%         if exist(paths.regData)
-%             save(paths.regData,'err_msg','-append'); %save error msg
-%         else
-%             save(paths.regData,'err_msg'); 
-%         end
-%     end
-%     
+       
+    
+    if ~exist('err','var')
+        status(i) = true;
+        err_msg{i} = [];
+    else
+        status(i) = false;
+        err_msg{i} = err;
+        if exist(paths.regData)
+            save(paths.regData,'err_msg','-append'); %save error msg
+        else
+            save(paths.regData,'err_msg'); 
+        end
+    end
+    
     clearvars '-except' dirs root_dir data_dirs params i status err_msg;
     
-    
+    %end
 end %end <<for i=1:numel(data_dirs)>>
 

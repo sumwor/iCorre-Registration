@@ -45,7 +45,11 @@ for i=1:numel(tif_paths)
     if mod(i, 1000) == 1
         % save mat files for every 1000 frame
         disp(['Converting ' source '...']);
-        stack = zeros(img_info.Width, img_info.Height, 1000);
+        if i > floor(numel(tif_paths)/1000)*1000
+            stack = zeros(img_info.Width, img_info.Height, numel(tif_paths)-floor(numel(tif_paths)/1000)*1000);
+        else
+            stack = zeros(img_info.Width, img_info.Height, 1000);
+        end
         matcount = matcount + 1;
         framecount = 1;
     end    
