@@ -166,7 +166,7 @@ for i=1:numel(data_dirs)
         options_label = fieldnames(options);
        
         for m = find(params.max_reps) %seed, rigid, non-rigid
-             if numel(QCcontent) == 2 
+            % if numel(QCcontent) == 2 
             tic;
             disp(' ');
             disp([upper(options_label{m}) ' registration in progress...']);
@@ -187,7 +187,7 @@ for i=1:numel(data_dirs)
             
             %% plot quality control figures
             plot_qualCtrl(dirs.QC, options_label{m});
-             end
+             %end
         end
         
         % display movement correction result analysis
